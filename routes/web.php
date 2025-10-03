@@ -76,6 +76,7 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/invoices/{invoice}/status', [InvoiceController::class, 'updateStatus'])->name('invoices.updateStatus');
         Route::get('/invoices/{invoice}/download', [InvoiceController::class, 'download'])->name('invoices.download');
         Route::post('/invoices/{invoice}/send', [InvoiceController::class, 'send'])->name('invoices.send');
+        Route::post('/invoices/{invoice}/generate-again', [InvoiceController::class, 'generateAgain'])->name('invoices.generateAgain');
     });
 });
 

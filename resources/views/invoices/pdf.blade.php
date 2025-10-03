@@ -71,7 +71,7 @@
         }
 
         .company-name {
-            font-size: 42px;
+            font-size: 48px;
             font-weight: bold;
             color: #F98127;
             margin-bottom: 8px;
@@ -387,7 +387,7 @@
                     <td>
                         <table class="company-info-table">
                             <tr>
-                                <td style="width: 120px; padding-right: 15px;">
+                                <td style="width: 120px; padding-right: 15px; vertical-align: top;">
                                     @if ($logoBase64)
                                         <img src="{{ $logoBase64 }}" alt="Logo Perusahaan"
                                             style="width: 100px; height: 100px; object-fit: contain; border-radius: 10px;">
@@ -402,9 +402,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td style="width: 120px; padding-right: 15px;">
-                                </td>
-                                <td class="company-details">
+                                <td colspan="2" style="padding-left: 0;">
                                     <div class="company-address">
                                         {{ $invoice->company_address ?? 'Office : Jl. Hugeng Imam Santoso Km.09 NGabul Tahunan Jepara, Central Java Indonesia. Workshop : Bawu Rt 10/02 Batealit Jepara.' }}<br>
                                         Telp: {{ $invoice->company_phone ?? '+6285741555089' }} | Email:

@@ -306,6 +306,14 @@
                         Download PDF
                     </a>
 
+                    <form action="{{ route('invoices.generateAgain', $invoice) }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit"
+                            class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded">
+                            Generate Invoice Again
+                        </button>
+                    </form>
+
                     <a href="{{ route('orders.show', $invoice->order) }}"
                         class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
                         Back to Order

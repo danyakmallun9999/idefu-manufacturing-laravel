@@ -424,6 +424,62 @@ class InvoiceController extends Controller
     }
 
     /**
+     * Generate new invoice based on existing invoice
+     */
+    public function generateAgain(Invoice $invoice)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Generate new invoice number
+            $today = now()->format('Ymd');
+            $latestInvoice = Invoice::where('invoice_number', 'like', "INV-{$today}-%")->latest('id')->first();
+            $nextNumber = $latestInvoice ? (int)substr($latestInvoice->invoice_number, -4) + 1 : 1;
+            $invoiceNumber = "INV-{$today}-" . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
+            // Create new invoice with same data from existing invoice
+            $newInvoice = Invoice::create([
+                'invoice_number' => $invoiceNumber,
+                'order_id' => $invoice->order_id,
+                'invoice_date' => now()->toDateString(),
+                'due_date' => now()->addDays(30)->toDateString(),
+                'subtotal' => $invoice->subtotal,
+                'shipping_cost' => $invoice->shipping_cost,
+                'tax_amount' => $invoice->tax_amount,
+                'total_amount' => $invoice->total_amount,
+                'paid_amount' => $invoice->paid_amount,
+                'payment_status' => $invoice->payment_status,
+                'payment_method' => $invoice->payment_method,
+                'bank_name' => $invoice->bank_name,
+                'account_number' => $invoice->account_number,
+                'account_holder' => $invoice->account_holder,
+                'po_number' => $invoice->po_number,
+                'shipping_address' => $invoice->shipping_address,
+                'company_name' => $invoice->company_name,
+                'company_address' => $invoice->company_address,
+                'company_phone' => $invoice->company_phone,
+                'company_email' => $invoice->company_email,
+                'company_website' => $invoice->company_website,
+                'seller_name' => $invoice->seller_name,
+                'terms_conditions' => $invoice->terms_conditions,
+                'status' => 'Draft',
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('invoices.show', $newInvoice)
+                ->with('success', 'Invoice baru berhasil dibuat berdasarkan invoice sebelumnya.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error generating new invoice: ' . $e->getMessage());
+            
+            return redirect()->route('invoices.show', $invoice)
+                ->with('error', 'Terjadi kesalahan saat membuat invoice baru.');
+        }
+    }
+
+    /**
      * Send invoice via email
      */
     public function send(Invoice $invoice)
