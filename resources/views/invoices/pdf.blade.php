@@ -532,12 +532,24 @@
                     <td class="total-label">Shipping Cost:</td>
                     <td class="total-amount">Rp {{ number_format($invoice->shipping_cost ?? 0, 0, ',', '.') }}</td>
                 </tr>
+                @if ($invoice->order->product_type !== 'custom' && $invoice->paid_amount > 0)
+                    <tr>
+                        <td class="total-label">Down Payment:</td>
+                        <td class="total-amount">Rp {{ number_format($invoice->paid_amount, 0, ',', '.') }}</td>
+                    </tr>
+                @endif
                 @if ($invoice->order->product_type !== 'custom')
                     <tr>
                         <td class="total-label"><strong>TOTAL:</strong></td>
                         <td class="total-amount" style="color: #F98127;"><strong>Rp
                                 {{ number_format($invoice->total_amount, 0, ',', '.') }}</strong></td>
                     </tr>
+                    @if ($invoice->paid_amount > 0 && $invoice->paid_amount < $invoice->total_amount)
+                        <tr>
+                            <td class="total-label">Remaining Payment:</td>
+                            <td class="total-amount" style="color: #dc2626;">Rp {{ number_format($invoice->total_amount - $invoice->paid_amount, 0, ',', '.') }}</td>
+                        </tr>
+                    @endif
                 @else
                     <tr>
                         <td class="total-label"><strong>PRICE TO BE CALCULATED:</strong></td>
