@@ -59,13 +59,13 @@
             </div>
 
             <!-- Remember Me -->
-            <div class="flex items-center mb-6">
+            <!-- <div class="flex items-center mb-6">
                 <input id="remember_me" type="checkbox" name="remember"
                     class="w-4 h-4 text-slate-900 border-slate-300 rounded focus:ring-slate-900 focus:ring-2">
                 <label for="remember_me" class="ml-2 text-sm text-slate-600">
                     Remember me
                 </label>
-            </div>
+            </div> -->
 
             <!-- Submit Button -->
             <button type="submit"
