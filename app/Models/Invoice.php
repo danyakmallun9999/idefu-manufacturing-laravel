@@ -15,6 +15,9 @@ class Invoice extends Model
         'invoice_date',
         'due_date',
         'subtotal',
+        'discount_amount',
+        'discount_percentage',
+        'discount_reason',
         'tax_amount',
         'total_amount',
         'status',
@@ -167,6 +170,35 @@ class Invoice extends Model
             $this->payment_date = $paymentDate;
         }
         $this->calculateRemainingAmount();
+    }
+
+    /**
+     * Apply discount to invoice
+     */
+    public function applyDiscount($amount, $percentage = null, $reason = null)
+    {
+        $this->discount_amount = $amount;
+        $this->discount_percentage = $percentage;
+        $this->discount_reason = $reason;
+        
+        // Recalculate total amount with discount
+        $this->total_amount = $this->subtotal + $this->shipping_cost + $this->tax_amount - $this->discount_amount;
+        
+        // Update remaining amount if there's paid amount
+        if ($this->paid_amount > 0) {
+            $this->remaining_amount = max(0, $this->total_amount - $this->paid_amount);
+            $this->payment_status = $this->remaining_amount <= 0 ? 'Paid' : 'Partial';
+        }
+        
+        $this->save();
+    }
+    
+    /**
+     * Get subtotal after discount
+     */
+    public function getSubtotalAfterDiscount()
+    {
+        return $this->subtotal - $this->discount_amount;
     }
 
     /**

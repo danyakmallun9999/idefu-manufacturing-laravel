@@ -852,6 +852,38 @@
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- Discount Section -->
+                            <div class="border-t pt-4">
+                                <h4 class="text-md font-medium text-gray-800 mb-3">Diskon</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah Diskon</label>
+                                        <div class="relative">
+                                            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">Rp</span>
+                                            <input type="text" name="discount_amount" value="0"
+                                                class="w-full pl-12 pr-4 py-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                                placeholder="0" oninput="formatNumber(this)" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Persentase Diskon</label>
+                                        <div class="relative">
+                                            <input type="number" name="discount_percentage" value=""
+                                                min="0" max="100" step="0.01"
+                                                class="w-full pr-8 py-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                                placeholder="0.00" />
+                                            <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Alasan Diskon</label>
+                                        <input type="text" name="discount_reason"
+                                            class="w-full py-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                            placeholder="Contoh: Early bird discount" />
+                                    </div>
+                                </div>
+                            </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Catatan</label>
                                 <textarea name="notes" rows="3"

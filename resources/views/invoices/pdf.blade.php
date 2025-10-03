@@ -532,6 +532,18 @@
                     <td class="total-label">Shipping Cost:</td>
                     <td class="total-amount">Rp {{ number_format($invoice->shipping_cost ?? 0, 0, ',', '.') }}</td>
                 </tr>
+                @if (($invoice->discount_amount ?? 0) > 0)
+                    <tr>
+                        <td class="total-label">Discount:</td>
+                        <td class="total-amount" style="color: #059669;">- Rp {{ number_format($invoice->discount_amount, 0, ',', '.') }}</td>
+                    </tr>
+                    @if ($invoice->discount_reason)
+                        <tr style="border-bottom: none;">
+                            <td class="total-label" style="font-size: 13px; color: #6b7280; font-style: italic;">Discount reason:</td>
+                            <td class="total-amount" style="font-size: 13px; color: #6b7280; font-style: italic;">{{ $invoice->discount_reason }}</td>
+                        </tr>
+                    @endif
+                @endif
                 @if ($invoice->order->product_type !== 'custom' && $invoice->paid_amount > 0)
                     <tr>
                         <td class="total-label">Down Payment:</td>

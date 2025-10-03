@@ -80,7 +80,18 @@ class InvoiceController extends Controller
 
             $taxAmount = 0; // Default no tax
             $shippingCost = (float) str_replace(['.', ','], ['', ''], $request->input('shipping_cost', 0));
-            $totalAmount = $subtotal + $taxAmount + $shippingCost;
+            
+            // Calculate discount
+            $discountAmount = (float) str_replace(['.', ','], ['', ''], $request->input('discount_amount', 0));
+            $discountPercentage = $request->input('discount_percentage', null);
+            $discountReason = $request->input('discount_reason', null);
+            
+            // If percentage is provided, calculate amount from subtotal
+            if ($discountPercentage && !$discountAmount) {
+                $discountAmount = $subtotal * ($discountPercentage / 100);
+            }
+            
+            $totalAmount = $subtotal + $taxAmount + $shippingCost - $discountAmount;
 
             // Calculate payment status based on incomes
             $totalPaid = $order->incomes->sum('amount');
@@ -132,6 +143,9 @@ class InvoiceController extends Controller
                 'invoice_date' => now(),
                 'due_date' => now()->addDays($dueDays),
                 'subtotal' => $subtotal,
+                'discount_amount' => $discountAmount,
+                'discount_percentage' => $discountPercentage,
+                'discount_reason' => $discountReason,
                 'tax_amount' => $taxAmount,
                 'total_amount' => $totalAmount,
                 'status' => 'Unpaid',
@@ -444,6 +458,9 @@ class InvoiceController extends Controller
                 'invoice_date' => now()->toDateString(),
                 'due_date' => now()->addDays(30)->toDateString(),
                 'subtotal' => $invoice->subtotal,
+                'discount_amount' => $invoice->discount_amount,
+                'discount_percentage' => $invoice->discount_percentage,
+                'discount_reason' => $invoice->discount_reason,
                 'shipping_cost' => $invoice->shipping_cost,
                 'tax_amount' => $invoice->tax_amount,
                 'total_amount' => $invoice->total_amount,
