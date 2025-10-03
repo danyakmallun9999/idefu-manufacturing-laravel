@@ -51,7 +51,23 @@
                     <span class="text-sm text-gray-500">Step {{ $stepNumber }} dari {{ $totalSteps }}</span>
                 </div>
 
-                <div class="relative px-6">
+                <div class="relative px-6" x-data="{ 
+                    currentIndex: {{ \App\Models\Order::getProgressIndex($order->status) }},
+                    totalSteps: {{ count(\App\Models\Order::PROGRESS_STATUSES) }},
+                    getProgressPercentage() {
+                        if (this.currentIndex === 0) return 0;
+                        // Calculate precise positioning to center on each node
+                        const nodeWidth = (100 / this.totalSteps);
+                        const nodeCenterOffset = nodeWidth / 2;
+                        return (this.currentIndex * nodeWidth) + nodeCenterOffset;
+                    },
+                    getCompletedWidth() {
+                        // Width from start to center of last completed step
+                        if (this.currentIndex === 0) return '0%';
+                        const stepWidth = 100 / (this.totalSteps - 1);
+                        return (this.currentIndex * stepWidth) + '%';
+                    }
+                }">
                     @php
                         $statuses = \App\Models\Order::PROGRESS_STATUSES;
                         $statusLabels = ['Draft', 'Menunggu', 'Produksi', 'Selesai', 'Dikirim', 'Closed'];
@@ -60,60 +76,103 @@
                     @endphp
 
                     <!-- Steps Container using CSS Grid for perfect alignment -->
-                    <div class="grid grid-cols-6 gap-2 relative">
+                    <div class="grid grid-cols-6 gap-0 relative">
                         <!-- Progress Line Background -->
                         <div class="absolute top-4 left-4 right-4 h-0.5 bg-gray-200 z-10"></div>
 
-                        <!-- Active Progress Line -->
-                        @php
-                            $progressPercentage = $currentIndex > 0 ? ($currentIndex / ($totalSteps - 1)) * 100 : 0;
-                        @endphp
-                        <div class="absolute top-4 left-4 h-0.5 bg-emerald-500 z-10 transition-all duration-500 ease-in-out"
-                            style="width: {{ $progressPercentage }}%; max-width: calc(100% - 32px);"></div>
+                        <!-- Completed Progress Line (Green) - from start to last completed step -->
+                        <div x-show="currentIndex > 0" 
+                             class="absolute top-4 left-4 h-0.5 bg-emerald-500 z-15 transition-all duration-500"
+                             :style="`width: ${getCompletedWidth()}; max-width: calc(100% - 32px);`"></div>
+
+                        <!-- Current Progress Line with gradient -->
+                        <div x-show="currentIndex > 0"
+                             class="absolute top-4 left-4 h-0.5 bg-gradient-to-r from-emerald-500 to-blue-500 z-20 transition-all duration-700 ease-out"
+                             :style="`width: ${getProgressPercentage()}%; max-width: calc(100% - 32px);`"
+                             x-init="$nextTick(() => $el.style.width = getProgressPercentage() + '%')"></div>
 
                         @foreach ($statuses as $index => $status)
                             @php
                                 $circleClass =
-                                    'w-8 h-8 mx-auto rounded-full flex items-center justify-center text-xs font-semibold border-2 relative z-20';
+                                    'w-8 h-8 mx-auto rounded-full flex items-center justify-center text-xs font-semibold border-2 relative z-20 transition-all duration-300 ease-in-out';
                                 if ($index <= $currentIndex) {
                                     if ($index == $currentIndex) {
-                                        $circleClass .= ' bg-blue-600 text-white border-blue-600 ring-2 ring-blue-100';
+                                        $circleClass .= ' bg-blue-600 text-white border-blue-600 ring-4 ring-blue-100 shadow-lg transform scale-105';
                                     } else {
-                                        $circleClass .= ' bg-emerald-500 text-white border-emerald-500';
+                                        $circleClass .= ' bg-emerald-500 text-white border-emerald-500 shadow-md animate-bounce';
                                     }
                                 } else {
-                                    $circleClass .= ' bg-white text-gray-400 border-gray-300';
+                                    $circleClass .= ' bg-white text-gray-400 border-gray-300 hover:border-gray-400 hover:shadow-md';
                                 }
                                 $label = $statusLabels[$index] ?? $status;
                             @endphp
 
-                            <div class="flex flex-col items-center relative">
-                                <div class="{{ $circleClass }}">
+                            <div class="flex flex-col items-center relative group" 
+                                 x-data="{ isActive: {{ $index }} === currentIndex, isCompleted: {{ $index }} < currentIndex }">
+                                <div class="{{ $circleClass }}" 
+                                     :class="{ 
+                                         'animate-pulse': isActive,
+                                         'hover:scale-110': !isActive && !isCompleted 
+                                     }"
+                                     title="{{ $status }}">
                                     @if ($index < $currentIndex)
                                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd"
                                                 d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                                 clip-rule="evenodd"></path>
                                         </svg>
+                                    @elseif ($index == $currentIndex)
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="10" stroke-width="3" opacity="0.25"></circle>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                  :d="`M12 ${12 - 4} A ${+index + 2} ${+index + 2} 0 1 1 ${12} ${12 + 4}`"></path>
+                                        </svg>
                                     @else
                                         {{ $index + 1 }}
                                     @endif
                                 </div>
 
-                                <div class="text-center mt-1 w-full">
-                                    <span class="text-[10px] text-gray-600 font-medium block truncate"
-                                        title="{{ $status }}">{{ $label }}</span>
+                                <div class="text-center mt-2 w-full" 
+                                     :class="{ 'animate-pulse': isActive }">
+                                    <span class="text-[10px] text-gray-600 font-medium block truncate transition-colors duration-300 cursor-help"
+                                          :class="{ 'text-blue-600 font-semibold': isActive, 'text-emerald-600 font-semibold': isCompleted }"
+                                          title="{{ $status }}">
+                                        {{ $label }}
+                                    </span>
+                                    <!-- Status indicator dot -->
+                                    <div class="mt-1 h-1 w-1 mx-auto rounded-full transition-all duration-300"
+                                         :class="{ 
+                                             'bg-blue-500': isActive, 
+                                             'bg-emerald-500': isCompleted,
+                                             'bg-gray-300': !isActive && !isCompleted 
+                                         }">
+                                        <div x-show="isCompleted" class="h-1 w-1 bg-emerald-400 rounded-full animate-ping"></div>
+                                    </div>
                                 </div>
                             </div>
                         @endforeach
                     </div>
 
-                    <!-- Alternative: Full text with fixed height container -->
-                    <div class="mt-4 text-center">
+                    <!-- Progress Summary -->
+                    <div class="mt-6 text-center space-y-2">
                         <p class="text-sm text-gray-600">
                             <span class="font-medium">Status saat ini:</span>
                             <span class="text-blue-600 font-semibold">{{ $order->status }}</span>
                         </p>
+                        <div class="flex justify-center items-center space-x-4 text-xs">
+                            <div class="flex items-center space-x-1">
+                                <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                                <span class="text-gray-500">Selesai</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                                <span class="text-gray-500">Sedang Proses</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
+                                <span class="text-gray-500">Menunggu</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
