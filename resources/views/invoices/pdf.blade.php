@@ -384,13 +384,13 @@
         <div class="header">
             <table class="header-table">
                 <tr>
-                    <td>
+                    <td class="invoice-header">
                         <table class="company-info-table">
                             <tr>
-                                <td style="width: 120px; padding-right: 15px; vertical-align: top;">
+                                <td style="width: 120px; padding-right: 15px; vertical-align: middle;">
                                     @if ($logoBase64)
                                         <img src="{{ $logoBase64 }}" alt="Logo Perusahaan"
-                                            style="width: 100px; height: 100px; object-fit: contain; border-radius: 10px;">
+                                            style="width: 100px; object-fit: contain; border-radius: 10px;">
                                     @else
                                         <div class="logo-placeholder">
                                             IDEFU
