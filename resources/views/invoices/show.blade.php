@@ -22,24 +22,24 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Informasi Invoice</h3>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Invoice Information</h3>
                         <div class="space-y-3">
                             <div>
-                                <p class="text-sm text-gray-600">Nomor Invoice:</p>
+                                <p class="text-sm text-gray-600">Invoice Number:</p>
                                 <p class="font-semibold">{{ $invoice->invoice_number }}</p>
                             </div>
                             <div>
-                                <p class="text-sm text-gray-600">Tanggal Invoice:</p>
+                                <p class="text-sm text-gray-600">Invoice Date:</p>
                                 <p class="font-semibold">
                                     {{ \Carbon\Carbon::parse($invoice->invoice_date)->format('d M Y') }}</p>
                             </div>
                             <div>
-                                <p class="text-sm text-gray-600">Jatuh Tempo:</p>
+                                <p class="text-sm text-gray-600">Due Date:</p>
                                 <p class="font-semibold">
                                     {{ \Carbon\Carbon::parse($invoice->due_date)->format('d M Y') }}</p>
                             </div>
                             <div>
-                                <p class="text-sm text-gray-600">Metode Pembayaran:</p>
+                                <p class="text-sm text-gray-600">Payment Method:</p>
                                 <span
                                     class="inline-block px-3 py-1 rounded-full text-sm font-medium
                                     @if ($invoice->payment_status === 'Paid') bg-green-100 text-green-800
@@ -53,22 +53,48 @@
                     </div>
 
                     <div>
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Informasi Order</h3>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Order Information</h3>
                         <div class="space-y-3">
                             <div>
                                 <p class="text-sm text-gray-600">Customer:</p>
                                 <p class="font-semibold">{{ $invoice->order->customer->name ?? 'N/A' }}</p>
                             </div>
                             <div>
-                                <p class="text-sm text-gray-600">Produk:</p>
-                                <p class="font-semibold">{{ $invoice->order->product_name }}</p>
+                                <p class="text-sm text-gray-600">Product:</p>
+                                <div class="flex items-start space-x-3">
+                                    @if ($invoice->order->product_type === 'custom' && $invoice->order->image)
+                                        <img src="{{ asset('storage/' . $invoice->order->image) }}" alt="Product Image" 
+                                             class="w-16 h-16 object-cover rounded-lg border border-gray-200">
+                                    @elseif ($invoice->order->product_type !== 'custom' && $invoice->order->product && $invoice->order->product->image)
+                                        <img src="{{ asset('storage/' . $invoice->order->product->image) }}" alt="Product Image" 
+                                             class="w-16 h-16 object-cover rounded-lg border border-gray-200">
+                                    @else
+                                        <img src="{{ asset('images/no-image.svg') }}" alt="No Image" 
+                                             class="w-16 h-16 object-cover rounded-lg border border-gray-200">
+                                    @endif
+                                    <div class="flex-1">
+                                        <p class="font-semibold">{{ $invoice->order->product_name }}</p>
+                                        @if ($invoice->order->product_type === 'custom')
+                                            <p class="text-sm text-gray-500">
+                                                <strong>Specification:</strong> {{ $invoice->order->product_specification ?? 'Custom made product according to requirements' }} | 
+                                                <strong>Type:</strong> Custom Product
+                                            </p>
+                                        @elseif ($invoice->order->product)
+                                            <p class="text-sm text-gray-500">
+                                                <strong>Model:</strong> {{ $invoice->order->product->model ?? '-' }} | 
+                                                <strong>Wood Type:</strong> {{ $invoice->order->product->wood_type ?? '-' }} | 
+                                                <strong>Details:</strong> {{ $invoice->order->product->details ?? '-' }}
+                                            </p>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
                             <div>
-                                <p class="text-sm text-gray-600">Jumlah:</p>
+                                <p class="text-sm text-gray-600">Quantity:</p>
                                 <p class="font-semibold">{{ $invoice->order->quantity }} pcs</p>
                             </div>
                             <div>
-                                <p class="text-sm text-gray-600">Harga per Produksi:</p>
+                                <p class="text-sm text-gray-600">Production Price:</p>
                                 @if ($invoice->order->product_type === 'custom')
                                     @php
                                         $totalPembelian = $invoice->order->purchases->sum(function ($purchase) {
@@ -80,9 +106,9 @@
                                     @if ($totalHPP > 0)
                                         <p class="font-semibold text-blue-600">HPP: Rp
                                             {{ number_format($totalHPP, 0, ',', '.') }}</p>
-                                        <p class="text-sm text-gray-500">+ Margin (akan ditentukan)</p>
+                                        <p class="text-sm text-gray-500">+ Margin (to be determined)</p>
                                     @else
-                                        <p class="font-semibold text-gray-500">Akan dihitung setelah produksi selesai
+                                        <p class="font-semibold text-gray-500">Will be calculated after production is completed
                                         </p>
                                     @endif
                                 @else
@@ -97,7 +123,7 @@
                 <hr class="my-6">
 
                 <div class="mb-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Rincian Biaya</h3>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Cost Details</h3>
                     <div class="bg-gray-50 p-4 rounded-lg">
                         @if ($invoice->order->product_type === 'custom')
                             @php
@@ -110,12 +136,12 @@
                             @if ($totalHPP > 0)
                                 <div class="space-y-3">
                                     <div class="flex justify-between items-center py-2">
-                                        <span class="text-gray-700">Total Pembelian Material:</span>
+                                        <span class="text-gray-700">Total Material Purchase:</span>
                                         <span class="font-semibold text-blue-600">Rp
                                             {{ number_format($totalPembelian, 0, ',', '.') }}</span>
                                     </div>
                                     <div class="flex justify-between items-center py-2">
-                                        <span class="text-gray-700">Total Biaya Produksi:</span>
+                                        <span class="text-gray-700">Total Production Cost:</span>
                                         <span class="font-semibold text-blue-600">Rp
                                             {{ number_format($totalBiayaProduksi, 0, ',', '.') }}</span>
                                     </div>
@@ -127,15 +153,15 @@
                                     </div>
                                     <div class="bg-blue-100 p-3 rounded-lg">
                                         <p class="text-sm text-blue-800">
-                                            <strong>Info:</strong> Harga jual akan dihitung dari HPP + margin yang akan
-                                            ditentukan setelah produksi selesai.
+                                            <strong>Info:</strong> Selling price will be calculated from HPP + margin that will
+                                            be determined after production is completed.
                                         </p>
                                     </div>
                                 </div>
                             @else
                                 <div class="text-center py-4">
-                                    <p class="text-gray-600">Harga akan dihitung setelah produksi selesai</p>
-                                    <p class="text-sm text-gray-500 mt-2">Berdasarkan HPP + margin</p>
+                                    <p class="text-gray-600">Price will be calculated after production is completed</p>
+                                    <p class="text-sm text-gray-500 mt-2">Based on HPP + margin</p>
                                 </div>
                             @endif
                         @else
@@ -145,7 +171,7 @@
                                     {{ number_format($invoice->subtotal, 0, ',', '.') }}</span>
                             </div>
                             <div class="flex justify-between items-center py-2">
-                                <span>Pajak:</span>
+                                <span>Tax:</span>
                                 <span class="font-semibold">Rp
                                     {{ number_format($invoice->tax_amount, 0, ',', '.') }}</span>
                             </div>
@@ -159,9 +185,9 @@
                     </div>
                 </div>
 
-                <!-- Informasi Pembayaran -->
+                <!-- Payment Information -->
                 <div class="mb-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Informasi Pembayaran</h3>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Payment Information</h3>
                     <div class="bg-blue-50 p-4 rounded-lg">
                         @if ($invoice->order->incomes->count() > 0)
                             <div class="space-y-3">
@@ -185,7 +211,7 @@
                                 @endforeach
                                 <hr class="border-blue-200 my-3">
                                 <div class="flex justify-between items-center py-2">
-                                    <span class="font-semibold text-blue-900">Total Dibayar:</span>
+                                    <span class="font-semibold text-blue-900">Total Paid:</span>
                                     <span class="font-bold text-blue-900">Rp
                                         {{ number_format($invoice->order->incomes->sum('amount'), 0, ',', '.') }}</span>
                                 </div>
@@ -201,34 +227,34 @@
                                 @endphp
                                 @if ($remainingAmount > 0)
                                     <div class="flex justify-between items-center py-2">
-                                        <span class="font-semibold text-red-600">Sisa Pembayaran:</span>
+                                        <span class="font-semibold text-red-600">Remaining Payment:</span>
                                         <span class="font-bold text-red-600">Rp
                                             {{ number_format($remainingAmount, 0, ',', '.') }}</span>
                                     </div>
                                 @elseif($invoice->order->product_type === 'custom' && $totalPaid > 0)
                                     <div class="flex justify-between items-center py-2">
                                         <span class="font-semibold text-green-600">Status:</span>
-                                        <span class="font-bold text-green-600">DP Dibayar (Rp
+                                        <span class="font-bold text-green-600">Down Payment Paid (Rp
                                             {{ number_format($totalPaid, 0, ',', '.') }})</span>
                                     </div>
                                 @endif
                             </div>
                         @else
                             <div class="text-center py-4">
-                                <p class="text-blue-600">Belum ada pembayaran yang diterima</p>
+                                <p class="text-blue-600">No payment has been received yet</p>
                             </div>
                         @endif
                     </div>
                 </div>
 
-                <!-- Status Invoice -->
+                <!-- Invoice Status -->
                 <div class="mb-6">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-medium text-gray-900">Status Invoice</h3>
+                        <h3 class="text-lg font-medium text-gray-900">Invoice Status</h3>
                         @if ($invoice->status === 'Paid')
                             <div class="flex items-center space-x-2">
                                 <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                                <span class="text-green-600 font-semibold text-lg">✓ LUNAS</span>
+                                <span class="text-green-600 font-semibold text-lg">✓ PAID</span>
                             </div>
                         @else
                             <span class="text-gray-600 font-medium">{{ $invoice->status }}</span>
@@ -244,8 +270,8 @@
                                         clip-rule="evenodd"></path>
                                 </svg>
                                 <div>
-                                    <p class="text-green-800 font-semibold">Invoice telah ditandai sebagai LUNAS</p>
-                                    <p class="text-green-600 text-sm">Pembayaran telah diterima dan diproses</p>
+                                    <p class="text-green-800 font-semibold">Invoice has been marked as PAID</p>
+                                    <p class="text-green-600 text-sm">Payment has been received and processed</p>
                                 </div>
                             </div>
                         </div>
@@ -270,7 +296,7 @@
                             <input type="hidden" name="status" value="Paid">
                             <button type="submit"
                                 class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                                Tandai Lunas
+                                Mark as Paid
                             </button>
                         </form>
                     @endif
@@ -282,7 +308,7 @@
 
                     <a href="{{ route('orders.show', $invoice->order) }}"
                         class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                        Kembali ke Order
+                        Back to Order
                     </a>
                 </div>
             </div>

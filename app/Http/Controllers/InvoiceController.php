@@ -159,7 +159,7 @@ class InvoiceController extends Controller
                 // Invoice customization (default values)
                 'po_number' => 'PO-' . date('Y') . '-' . str_pad($order->id, 3, '0', STR_PAD_LEFT),
                 'seller_name' => 'Idefu Furniture',
-                'terms_conditions' => 'Pembayaran harus dilakukan sebelum tanggal jatuh tempo yang tertera pada invoice. Barang yang sudah dipesan dan diproduksi tidak dapat dibatalkan atau dikembalikan. Perubahan spesifikasi setelah produksi dimulai akan dikenakan biaya tambahan. Waktu pengerjaan dihitung setelah pembayaran diterima dan spesifikasi final disetujui. Segala perselisihan akan diselesaikan secara musyawarah atau melalui arbitrase.',
+                'terms_conditions' => 'Payment must be made before the due date specified on the invoice. Items that have been ordered and produced cannot be cancelled or returned. Specification changes after production has started will incur additional costs. Production time is calculated after payment is received and final specifications are approved. All disputes will be resolved through consultation or arbitration.',
                 'notes_customer' => $request->input('notes_customer'),
                 
                 // Payment tracking
@@ -200,7 +200,7 @@ class InvoiceController extends Controller
      */
     public function show(Invoice $invoice)
     {
-        $invoice->load(['order.customer']);
+        $invoice->load(['order.customer', 'order.product']);
         return view('invoices.show', compact('invoice'));
     }
 
@@ -311,13 +311,16 @@ class InvoiceController extends Controller
      */
     public function download(Invoice $invoice)
     {
-        $invoice->load(['order.customer']);
+        $invoice->load(['order.customer', 'order.product']);
         
         // Prepare logo data for PDF
         $logoBase64 = $this->getLogoAsBase64($invoice);
         
+        // Prepare product image data for PDF
+        $productImageBase64 = $this->getProductImageAsBase64($invoice);
+        
         // Generate PDF using DomPDF with logo data and optimized margins
-        $pdf = Pdf::loadView('invoices.pdf', compact('invoice', 'logoBase64'))
+        $pdf = Pdf::loadView('invoices.pdf', compact('invoice', 'logoBase64', 'productImageBase64'))
             ->setOption('isHtml5ParserEnabled', true)
             ->setOption('isRemoteEnabled', true)
             ->setOption('dpi', 150)
@@ -365,6 +368,37 @@ class InvoiceController extends Controller
     }
 
     /**
+     * Get product image as base64 encoded string
+     */
+    private function getProductImageAsBase64($invoice)
+    {
+        // Priority 1: Check if order has custom product image
+        if ($invoice->order->product_type === 'custom' && $invoice->order->image) {
+            $imagePath = storage_path('app/public/' . $invoice->order->image);
+            if (file_exists($imagePath)) {
+                return $this->encodeImageToBase64($imagePath);
+            }
+        }
+        
+        // Priority 2: Check if order has fixed product with image
+        if ($invoice->order->product_type !== 'custom' && $invoice->order->product && $invoice->order->product->image) {
+            $imagePath = storage_path('app/public/' . $invoice->order->product->image);
+            if (file_exists($imagePath)) {
+                return $this->encodeImageToBase64($imagePath);
+            }
+        }
+        
+        // Priority 3: Check default no-image placeholder
+        $noImagePath = public_path('images/no-image.svg');
+        if (file_exists($noImagePath)) {
+            return $this->encodeImageToBase64($noImagePath);
+        }
+        
+        // Return null if no image found
+        return null;
+    }
+
+    /**
      * Encode image file to base64
      */
     private function encodeImageToBase64($imagePath)
@@ -384,7 +418,7 @@ class InvoiceController extends Controller
             
             return 'data:' . $mimeType . ';base64,' . base64_encode($imageData);
         } catch (\Exception $e) {
-            \Log::error('Error encoding logo to base64: ' . $e->getMessage());
+            \Log::error('Error encoding image to base64: ' . $e->getMessage());
             return null;
         }
     }

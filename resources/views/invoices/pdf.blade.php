@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -29,7 +29,7 @@
         .header {
             margin-bottom: 25px;
             padding-bottom: 15px;
-            border-bottom: 4px solid #2563eb;
+            border-bottom: 4px solid #F98127;
         }
 
         .header-table {
@@ -55,7 +55,7 @@
         .logo-placeholder {
             width: 100px;
             height: 100px;
-            background: #2563eb;
+            background: #F98127;
             border-radius: 10px;
             text-align: center;
             vertical-align: middle;
@@ -71,10 +71,11 @@
         }
 
         .company-name {
-            font-size: 32px;
+            font-size: 42px;
             font-weight: bold;
-            color: #1e40af;
+            color: #F98127;
             margin-bottom: 8px;
+            line-height: 100px;
         }
 
         .company-address {
@@ -91,7 +92,7 @@
         .invoice-title {
             font-size: 42px;
             font-weight: bold;
-            color: #1e40af;
+            color: #F98127;
             margin-bottom: 10px;
         }
 
@@ -123,7 +124,7 @@
         .section-title {
             font-size: 18px;
             font-weight: bold;
-            color: #1e40af;
+            color: #F98127;
             margin-bottom: 10px;
             padding-bottom: 5px;
             border-bottom: 2px solid #e5e7eb;
@@ -140,7 +141,7 @@
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
-            border-left: 5px solid #2563eb;
+            border-left: 5px solid #F98127;
         }
 
         .details-grid {
@@ -175,10 +176,10 @@
         }
 
         .items-table th {
-            background: #2563eb;
+            background: #F98127;
             color: white;
             padding: 15px 10px;
-            text-align: left;
+            text-align: center;
             font-weight: 600;
             font-size: 15px;
         }
@@ -187,6 +188,27 @@
             padding: 12px 10px;
             border-bottom: 1px solid #e5e7eb;
             font-size: 15px;
+            text-align: center;
+        }
+
+        .product-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+            margin-bottom: 8px;
+        }
+
+        .product-details {
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .product-details-inline {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.4;
         }
 
         .items-table tr:last-child td {
@@ -213,6 +235,7 @@
 
         .totals-table {
             min-width: 350px;
+            margin-left: auto;
         }
 
         .totals-table tr {
@@ -220,7 +243,7 @@
         }
 
         .totals-table tr:last-child {
-            border-bottom: 3px solid #2563eb;
+            border-bottom: 3px solid #F98127;
             font-weight: bold;
             font-size: 18px;
         }
@@ -250,7 +273,7 @@
         .payment-title {
             font-size: 18px;
             font-weight: bold;
-            color: #1e40af;
+            color: #F98127;
             margin-bottom: 10px;
         }
 
@@ -280,7 +303,7 @@
         .terms-title {
             font-size: 18px;
             font-weight: bold;
-            color: #1e40af;
+            color: #F98127;
             margin-bottom: 10px;
         }
 
@@ -375,7 +398,13 @@
                                     @endif
                                 </td>
                                 <td class="company-details">
-                                    <div class="company-name">{{ $invoice->company_name ?? 'Idefu Furniture' }}</div>
+                                    <div class="company-name">{{ $invoice->company_name }}</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width: 120px; padding-right: 15px;">
+                                </td>
+                                <td class="company-details">
                                     <div class="company-address">
                                         {{ $invoice->company_address ?? 'Office : Jl. Hugeng Imam Santoso Km.09 NGabul Tahunan Jepara, Central Java Indonesia. Workshop : Bawu Rt 10/02 Batealit Jepara.' }}<br>
                                         Telp: {{ $invoice->company_phone ?? '+6285741555089' }} | Email:
@@ -420,16 +449,16 @@
         <div class="invoice-details">
             <div class="details-grid">
                 <div class="detail-item">
-                    <span class="detail-label">Tanggal Invoice:</span>
+                    <span class="detail-label">Invoice Date:</span>
                     <span
                         class="detail-value">{{ \Carbon\Carbon::parse($invoice->invoice_date)->format('d M Y') }}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Jatuh Tempo:</span>
+                    <span class="detail-label">Due Date:</span>
                     <span class="detail-value">{{ \Carbon\Carbon::parse($invoice->due_date)->format('d M Y') }}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Status Pembayaran:</span>
+                    <span class="detail-label">Payment Status:</span>
                     <span class="detail-value">{{ $invoice->payment_status_display }}</span>
                 </div>
                 <div class="detail-item">
@@ -444,31 +473,43 @@
             <thead>
                 <tr>
                     <th width="5%">#</th>
-                    <th width="40%">Deskripsi Produk</th>
+                    <th width="15%" class="text-center">Image</th>
+                    <th width="30%">Product Description</th>
                     <th width="10%" class="text-center">Qty</th>
-                    <th width="15%" class="text-right">Harga Satuan</th>
+                    <th width="15%" class="text-right">Unit Price</th>
                     <th width="15%" class="text-right">Total</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td class="text-center">1</td>
-                    <td>
+                    <td class="text-center">
+                        @if ($productImageBase64)
+                            <img src="{{ $productImageBase64 }}" alt="Product Image" class="product-image">
+                        @else
+                            <div class="product-image" style="background: #f3f4f6; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 12px;">
+                                No Image
+                            </div>
+                        @endif
+                    </td>
+                    <td class="product-details">
                         <strong style="font-size: 16px;">{{ $invoice->order->product_name }}</strong><br>
                         @if ($invoice->order->product_type === 'custom')
-                            <small style="color: #666; font-size: 13px;">Spesifikasi:
-                                {{ $invoice->order->product_specification ?? 'Custom made product sesuai requirement' }}</small>
-                            <br><small style="color: #666; font-size: 13px;">Tipe: Produk Custom</small>
+                            <div class="product-details-inline">
+                                <strong>Specification:</strong> {{ $invoice->order->product_specification ?? 'Custom made product according to requirements' }} | 
+                                <strong>Type:</strong> Custom Product
+                            </div>
                         @else
                             @if ($invoice->order->product)
-                                <small style="color: #666; font-size: 13px;">Model:
-                                    {{ $invoice->order->product->model ?? '-' }}</small><br>
-                                <small style="color: #666; font-size: 13px;">Jenis Kayu:
-                                    {{ $invoice->order->product->wood_type ?? '-' }}</small><br>
-                                <small style="color: #666; font-size: 13px;">Detail:
-                                    {{ $invoice->order->product->details ?? '-' }}</small>
+                                <div class="product-details-inline">
+                                    <strong>Model:</strong> {{ $invoice->order->product->model ?? '-' }} | 
+                                    <strong>Wood Type:</strong> {{ $invoice->order->product->wood_type ?? '-' }} | 
+                                    <strong>Details:</strong> {{ $invoice->order->product->details ?? '-' }}
+                                </div>
                             @else
-                                <small style="color: #666; font-size: 13px;">Produk Tetap</small>
+                                <div class="product-details-inline">
+                                    <strong>Type:</strong> Fixed Product
+                                </div>
                             @endif
                         @endif
                     </td>
@@ -490,20 +531,20 @@
                     <td class="total-amount">Rp {{ number_format($invoice->subtotal, 0, ',', '.') }}</td>
                 </tr>
                 <tr>
-                    <td class="total-label">Biaya Pengiriman:</td>
+                    <td class="total-label">Shipping Cost:</td>
                     <td class="total-amount">Rp {{ number_format($invoice->shipping_cost ?? 0, 0, ',', '.') }}</td>
                 </tr>
                 @if ($invoice->order->product_type !== 'custom')
                     <tr>
                         <td class="total-label"><strong>TOTAL:</strong></td>
-                        <td class="total-amount" style="color: #2563eb;"><strong>Rp
+                        <td class="total-amount" style="color: #F98127;"><strong>Rp
                                 {{ number_format($invoice->total_amount, 0, ',', '.') }}</strong></td>
                     </tr>
                 @else
                     <tr>
-                        <td class="total-label"><strong>HARGA AKAN DIHITUNG:</strong></td>
-                        <td class="total-amount" style="color: #dc2626; font-style: italic;"><strong>Akan dihitung
-                                setelah produksi selesai.</strong></td>
+                        <td class="total-label"><strong>PRICE TO BE CALCULATED:</strong></td>
+                        <td class="total-amount" style="color: #dc2626; font-style: italic;"><strong>Will be calculated
+                                after production is completed.</strong></td>
                     </tr>
                 @endif
             </table>
@@ -512,24 +553,24 @@
         @if ($invoice->order->product_type === 'custom')
             <!-- Payment Information for Custom Products -->
             <div class="payment-section">
-                <div class="payment-title">Informasi Pembayaran</div>
+                <div class="payment-title">Payment Information</div>
                 <div class="payment-method">
-                    <div class="method-name">Status Pembayaran</div>
+                    <div class="method-name">Payment Status</div>
                     <div class="method-details">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <span style="font-size: 14px;">Total DP yang sudah dibayar:</span>
+                            <span style="font-size: 14px;">Total Down Payment Paid:</span>
                             <span style="font-weight: bold; color: #059669; font-size: 14px;">Rp
                                 {{ number_format($invoice->paid_amount, 0, ',', '.') }}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span style="font-size: 14px;">Status:</span>
                             <span
-                                style="font-weight: bold; color: #2563eb; font-size: 14px;">{{ $invoice->payment_status_display }}</span>
+                                style="font-weight: bold; color: #F98127; font-size: 14px;">{{ $invoice->payment_status_display }}</span>
                         </div>
                         <div
                             style="margin-top: 12px; padding: 10px; background: #fef3c7; border-radius: 6px; font-size: 13px; color: #92400e;">
-                            <strong>Info:</strong> Harga final akan dihitung setelah produksi
-                            selesai.
+                            <strong>Info:</strong> Final price will be calculated after production
+                            is completed.
                         </div>
                     </div>
                 </div>
@@ -537,14 +578,14 @@
         @else
             <!-- Payment Methods for Fixed Products -->
             <div class="payment-section">
-                <div class="payment-title">Metode Pembayaran</div>
+                <div class="payment-title">Payment Methods</div>
                 <div class="payment-method">
-                    <div class="method-name">{{ $invoice->payment_method_display ?? 'Transfer Bank BCA' }}</div>
+                    <div class="method-name">{{ $invoice->payment_method_display ?? 'Bank Transfer BCA' }}</div>
                     @if ($invoice->bank_name && $invoice->account_number)
                         <div class="method-details">
                             Bank: {{ $invoice->bank_name }}<br>
-                            No. Rek: {{ $invoice->account_number }}<br>
-                            Atas Nama: {{ $invoice->account_holder ?? 'Idefu Furniture' }}
+                            Account No: {{ $invoice->account_number }}<br>
+                            Account Name: {{ $invoice->account_holder ?? 'Idefu Furniture' }}
                         </div>
                     @endif
                 </div>
@@ -553,17 +594,17 @@
 
         <!-- Terms and Conditions -->
         <div class="terms-section">
-            <div class="terms-title">Syarat dan Ketentuan</div>
+            <div class="terms-title">Terms and Conditions</div>
             <div class="terms-content">
                 @if ($invoice->terms_conditions)
                     {!! nl2br(e($invoice->terms_conditions)) !!}
                 @else
                     <ul>
-                        <li>Pembayaran harus dilakukan sebelum tanggal jatuh tempo yang tertera pada invoice.</li>
-                        <li>Barang yang sudah dipesan dan diproduksi tidak dapat dibatalkan atau dikembalikan.</li>
-                        <li>Perubahan spesifikasi setelah produksi dimulai akan dikenakan biaya tambahan.</li>
-                        <li>Waktu pengerjaan dihitung setelah pembayaran diterima dan spesifikasi final disetujui.</li>
-                        <li>Segala perselisihan akan diselesaikan secara musyawarah atau melalui arbitrase.</li>
+                        <li>Payment must be made before the due date specified on the invoice.</li>
+                        <li>Items that have been ordered and produced cannot be cancelled or returned.</li>
+                        <li>Specification changes after production has started will incur additional costs.</li>
+                        <li>Production time is calculated after payment is received and final specifications are approved.</li>
+                        <li>All disputes will be resolved through consultation or arbitration.</li>
                     </ul>
                 @endif
             </div>
@@ -574,17 +615,17 @@
             <table class="signature-table">
                 <tr>
                     <td>
-                        <div class="signature-title">Penjual</div>
+                        <div class="signature-title">Seller</div>
                         <div class="signature-line">
                             <strong>{{ $invoice->seller_name ?? 'Idefu Furniture' }}</strong><br>
-                            Tanggal: ___________
+                            Date: ___________
                         </div>
                     </td>
                     <td>
-                        <div class="signature-title">Pembeli</div>
+                        <div class="signature-title">Buyer</div>
                         <div class="signature-line">
-                            <strong>{{ $invoice->order->customer->name ?? 'Nama Customer' }}</strong><br>
-                            Tanggal: ___________
+                            <strong>{{ $invoice->order->customer->name ?? 'Customer Name' }}</strong><br>
+                            Date: ___________
                         </div>
                     </td>
                 </tr>
@@ -593,9 +634,9 @@
 
         <!-- Footer -->
         <div class="footer">
-            <p><strong>Terima kasih telah mempercayakan bisnis Anda kepada kami.</strong></p>
-            <p>Invoice ini dibuat secara elektronik dan sah tanpa tanda tangan basah.</p>
-            <p>Untuk pertanyaan mengenai invoice ini, hubungi kami di idesign@idefu.co.id atau +6285741555089</p>
+            <p><strong>Thank you for trusting your business to us.</strong></p>
+            <p>This invoice is created electronically and is valid without a wet signature.</p>
+            <p>For questions regarding this invoice, contact us at idesign@idefu.co.id or +6285741555089</p>
         </div>
     </div>
 </body>
