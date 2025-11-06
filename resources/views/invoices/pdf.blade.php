@@ -14,7 +14,7 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #333;
-            font-size: 16px;
+            font-size: 22px;
             line-height: 1.5;
             background: #fff;
         }
@@ -61,7 +61,7 @@
             vertical-align: middle;
             color: white;
             font-weight: bold;
-            font-size: 22px;
+            font-size: 30px;
             line-height: 100px;
         }
 
@@ -71,7 +71,7 @@
         }
 
         .company-name {
-            font-size: 48px;
+            font-size: 62px;
             font-weight: bold;
             color: #F98127;
             margin-bottom: 8px;
@@ -81,7 +81,7 @@
         .company-address {
             color: #666;
             line-height: 1.5;
-            font-size: 15px;
+            font-size: 20px;
         }
 
         .invoice-header {
@@ -90,14 +90,14 @@
         }
 
         .invoice-title {
-            font-size: 42px;
+            font-size: 56px;
             font-weight: bold;
             color: #F98127;
             margin-bottom: 10px;
         }
 
         .invoice-number {
-            font-size: 18px;
+            font-size: 24px;
             color: #666;
         }
 
@@ -122,7 +122,7 @@
         }
 
         .section-title {
-            font-size: 18px;
+            font-size: 24px;
             font-weight: bold;
             color: #F98127;
             margin-bottom: 10px;
@@ -133,7 +133,7 @@
         .address-info {
             line-height: 1.5;
             color: #333;
-            font-size: 15px;
+            font-size: 20px;
         }
 
         .invoice-details {
@@ -158,12 +158,12 @@
         .detail-label {
             font-weight: bold;
             color: #374151;
-            font-size: 15px;
+            font-size: 20px;
         }
 
         .detail-value {
             color: #1f2937;
-            font-size: 15px;
+            font-size: 20px;
         }
 
         .items-table {
@@ -181,13 +181,13 @@
             padding: 15px 10px;
             text-align: center;
             font-weight: 600;
-            font-size: 15px;
+            font-size: 20px;
         }
 
         .items-table td {
             padding: 12px 10px;
             border-bottom: 1px solid #e5e7eb;
-            font-size: 15px;
+            font-size: 20px;
             text-align: center;
         }
 
@@ -207,7 +207,7 @@
 
         .product-details-inline {
             color: #666;
-            font-size: 13px;
+            font-size: 18px;
             line-height: 1.4;
         }
 
@@ -245,12 +245,12 @@
         .totals-table tr:last-child {
             border-bottom: 3px solid #F98127;
             font-weight: bold;
-            font-size: 18px;
+            font-size: 24px;
         }
 
         .totals-table td {
             padding: 10px 15px;
-            font-size: 15px;
+            font-size: 20px;
         }
 
         .total-label {
@@ -271,7 +271,7 @@
         }
 
         .payment-title {
-            font-size: 18px;
+            font-size: 24px;
             font-weight: bold;
             color: #F98127;
             margin-bottom: 10px;
@@ -288,11 +288,11 @@
             font-weight: bold;
             color: #374151;
             margin-bottom: 5px;
-            font-size: 15px;
+            font-size: 20px;
         }
 
         .method-details {
-            font-size: 14px;
+            font-size: 19px;
             color: #6b7280;
         }
 
@@ -301,14 +301,14 @@
         }
 
         .terms-title {
-            font-size: 18px;
+            font-size: 24px;
             font-weight: bold;
             color: #F98127;
             margin-bottom: 10px;
         }
 
         .terms-content {
-            font-size: 14px;
+            font-size: 19px;
             color: #4b5563;
             line-height: 1.5;
         }
@@ -340,15 +340,16 @@
         .signature-title {
             font-weight: bold;
             color: #374151;
-            margin-bottom: 40px;
-            font-size: 16px;
+            margin-bottom: 120px;
+            font-size: 21px;
         }
 
         .signature-line {
             border-top: 2px solid #374151;
-            padding-top: 8px;
-            font-size: 14px;
+            padding-top: 18px;
+            font-size: 19px;
             color: #6b7280;
+            margin-bottom: 18px;
         }
 
         .footer {
@@ -356,7 +357,7 @@
             text-align: center;
             padding-top: 15px;
             border-top: 1px solid #e5e7eb;
-            font-size: 13px;
+            font-size: 18px;
             color: #6b7280;
         }
 
@@ -485,13 +486,13 @@
                         @if ($productImageBase64)
                             <img src="{{ $productImageBase64 }}" alt="Product Image" class="product-image">
                         @else
-                            <div class="product-image" style="background: #f3f4f6; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 12px;">
+                            <div class="product-image" style="background: #f3f4f6; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 17px;">
                                 No Image
                             </div>
                         @endif
                     </td>
                     <td class="product-details">
-                        <strong style="font-size: 16px;">{{ $invoice->order->product_name }}</strong><br>
+                        <strong style="font-size: 22px;">{{ $invoice->order->product_name }}</strong><br>
                         @if ($invoice->order->product_type === 'custom')
                             <div class="product-details-inline">
                                 <strong>Specification:</strong> {{ $invoice->order->product_specification ?? 'Custom made product according to requirements' }} | 
@@ -511,11 +512,11 @@
                             @endif
                         @endif
                     </td>
-                    <td class="text-center" style="font-size: 15px;">{{ $invoice->order->quantity }} pcs</td>
-                    <td class="text-right" style="font-size: 15px;">Rp
+                    <td class="text-center" style="font-size: 20px;">{{ $invoice->order->quantity }} pcs</td>
+                    <td class="text-right" style="font-size: 20px;">Rp
                         {{ number_format($invoice->order->product_type === 'custom' ? $invoice->subtotal / $invoice->order->quantity : $invoice->order->total_price ?? 0, 0, ',', '.') }}
                     </td>
-                    <td class="text-right" style="font-size: 15px; font-weight: bold;">Rp
+                    <td class="text-right" style="font-size: 20px; font-weight: bold;">Rp
                         {{ number_format($invoice->subtotal, 0, ',', '.') }}</td>
                 </tr>
             </tbody>
@@ -539,8 +540,8 @@
                     </tr>
                     @if ($invoice->discount_reason)
                         <tr style="border-bottom: none;">
-                            <td class="total-label" style="font-size: 13px; color: #6b7280; font-style: italic;">Discount reason:</td>
-                            <td class="total-amount" style="font-size: 13px; color: #6b7280; font-style: italic;">{{ $invoice->discount_reason }}</td>
+                            <td class="total-label" style="font-size: 18px; color: #6b7280; font-style: italic;">Discount reason:</td>
+                            <td class="total-amount" style="font-size: 18px; color: #6b7280; font-style: italic;">{{ $invoice->discount_reason }}</td>
                         </tr>
                     @endif
                 @endif
@@ -580,17 +581,17 @@
                     <div class="method-name">Payment Status</div>
                     <div class="method-details">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <span style="font-size: 14px;">Total Down Payment Paid:</span>
-                            <span style="font-weight: bold; color: #059669; font-size: 14px;">Rp
+                            <span style="font-size: 19px;">Total Down Payment Paid:</span>
+                            <span style="font-weight: bold; color: #059669; font-size: 19px;">Rp
                                 {{ number_format($invoice->paid_amount, 0, ',', '.') }}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
-                            <span style="font-size: 14px;">Status:</span>
+                            <span style="font-size: 19px;">Status:</span>
                             <span
-                                style="font-weight: bold; color: #F98127; font-size: 14px;">{{ $invoice->payment_status_display }}</span>
+                                style="font-weight: bold; color: #F98127; font-size: 19px;">{{ $invoice->payment_status_display }}</span>
                         </div>
                         <div
-                            style="margin-top: 12px; padding: 10px; background: #fef3c7; border-radius: 6px; font-size: 13px; color: #92400e;">
+                            style="margin-top: 12px; padding: 10px; background: #fef3c7; border-radius: 6px; font-size: 18px; color: #92400e;">
                             <strong>Info:</strong> Final price will be calculated after production
                             is completed.
                         </div>
