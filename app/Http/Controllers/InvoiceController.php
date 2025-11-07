@@ -51,31 +51,14 @@ class InvoiceController extends Controller
 
             // Calculate amounts based on product type
             if ($order->product_type === 'custom') {
-                // For custom products: calculate from production costs + margin
-                $totalPembelian = $order->purchases->sum(function ($purchase) {
-                    return $purchase->quantity * $purchase->price;
-                });
-                $totalBiayaProduksi = $order->productionCosts->sum('amount');
-                $totalHPP = $totalPembelian + $totalBiayaProduksi;
-                
-                // Use default margin percentage (30%)
-                $marginPercentage = 30; // Default margin
-                $marginAmount = $totalHPP * ($marginPercentage / 100);
-                
-                $subtotal = $totalHPP + $marginAmount;
-                
-                // Store HPP breakdown for invoice
-                $hppBreakdown = [
-                    'total_pembelian' => $totalPembelian,
-                    'total_biaya_produksi' => $totalBiayaProduksi,
-                    'total_hpp' => $totalHPP,
-                    'margin_percentage' => $marginPercentage,
-                    'margin_amount' => $marginAmount,
-                ];
+                $pricing = $this->calculateCustomPricing($order);
+                $subtotal = $pricing['subtotal'];
+                $hppBreakdown = $pricing['breakdown'];
+                $snapshotUnitPrice = $pricing['unit_price'];
             } else {
-                // For fixed products: use existing total_price
-                $subtotal = $order->total_price * $order->quantity;
+                $subtotal = ($order->total_price ?? 0) * $order->quantity;
                 $hppBreakdown = null;
+                $snapshotUnitPrice = $order->total_price ?? 0;
             }
 
             $taxAmount = 0; // Default no tax
@@ -181,6 +164,9 @@ class InvoiceController extends Controller
                 'remaining_amount' => $remainingAmount,
                 'payment_date' => $totalPaid > 0 ? now() : null,
                 'payment_status' => $paymentStatus,
+                'order_quantity_snapshot' => $order->quantity,
+                'order_unit_price_snapshot' => $snapshotUnitPrice,
+                'order_total_snapshot' => $subtotal,
                 
                 // Notes with payment information for custom products
                 'notes' => $request->input('notes') . ($hppBreakdown ? "\n\nInformasi Pembayaran:\n" . 
@@ -214,8 +200,75 @@ class InvoiceController extends Controller
      */
     public function show(Invoice $invoice)
     {
-        $invoice->load(['order.customer', 'order.product']);
-        return view('invoices.show', compact('invoice'));
+        $invoice->load([
+            'order.customer',
+            'order.product',
+            'order.purchases',
+            'order.productionCosts',
+            'order.incomes',
+        ]);
+
+        $order = $invoice->order;
+        $product = $order->product;
+
+        if ($order->product_type === 'custom') {
+            $pricing = $this->calculateCustomPricing($order);
+            $currentSubtotal = $pricing['subtotal'];
+            $currentUnitPrice = $pricing['unit_price'];
+            $currentBreakdown = $pricing['breakdown'];
+        } else {
+            $currentUnitPrice = $order->total_price ?? 0;
+            $currentSubtotal = $currentUnitPrice * $order->quantity;
+            $currentBreakdown = null;
+        }
+
+        $discountAmount = $invoice->discount_amount ?? 0;
+        $shippingCost = $invoice->shipping_cost ?? 0;
+        $taxAmount = $invoice->tax_amount ?? 0;
+
+        $currentTotalAmount = max(0, $currentSubtotal + $taxAmount + $shippingCost - $discountAmount);
+        $currentRemainingAmount = max(0, $currentTotalAmount - ($invoice->paid_amount ?? 0));
+
+        $snapshotData = [
+            'quantity' => $invoice->order_quantity_snapshot,
+            'unit_price' => $invoice->order_unit_price_snapshot,
+            'subtotal' => $invoice->order_total_snapshot,
+            'total' => $invoice->total_amount,
+            'remaining' => $invoice->remaining_amount,
+        ];
+
+        $currentData = [
+            'quantity' => $order->quantity,
+            'unit_price' => $currentUnitPrice,
+            'subtotal' => $currentSubtotal,
+            'total' => $currentTotalAmount,
+            'remaining' => $currentRemainingAmount,
+            'stock_available' => $product?->stock,
+            'stock_difference' => $product && $product->stock !== null ? $product->stock - $order->quantity : null,
+            'custom_breakdown' => $currentBreakdown,
+        ];
+
+        $changes = [
+            'quantity_changed' => $snapshotData['quantity'] !== null && abs($snapshotData['quantity'] - $currentData['quantity']) > 0.01,
+            'unit_price_changed' => $snapshotData['unit_price'] !== null && abs($snapshotData['unit_price'] - $currentData['unit_price']) > 0.01,
+            'subtotal_changed' => $snapshotData['subtotal'] !== null && abs($snapshotData['subtotal'] - $currentData['subtotal']) > 0.01,
+            'total_changed' => $snapshotData['total'] !== null && abs($snapshotData['total'] - $currentData['total']) > 0.01,
+            'remaining_changed' => $snapshotData['remaining'] !== null && abs($snapshotData['remaining'] - $currentData['remaining']) > 0.01,
+        ];
+
+        $changes['requires_regeneration'] = in_array(true, $changes, true);
+
+        $stockWarning = $product && $currentData['stock_available'] !== null
+            ? $currentData['stock_available'] < $currentData['quantity']
+            : false;
+
+        return view('invoices.show', [
+            'invoice' => $invoice,
+            'snapshotData' => $snapshotData,
+            'currentData' => $currentData,
+            'changes' => $changes,
+            'stockWarning' => $stockWarning,
+        ]);
     }
 
     /**
@@ -347,6 +400,38 @@ class InvoiceController extends Controller
         
         // Return PDF for download
         return $pdf->download($invoice->invoice_number . '.pdf');
+    }
+
+    /**
+     * Calculate pricing information for custom products.
+     */
+    private function calculateCustomPricing(Order $order): array
+    {
+        $order->loadMissing(['purchases', 'productionCosts']);
+
+        $totalPembelian = $order->purchases->sum(function ($purchase) {
+            return $purchase->quantity * $purchase->price;
+        });
+
+        $totalBiayaProduksi = $order->productionCosts->sum('amount');
+        $totalHPP = $totalPembelian + $totalBiayaProduksi;
+
+        $marginPercentage = 30;
+        $marginAmount = $totalHPP * ($marginPercentage / 100);
+        $subtotal = $totalHPP + $marginAmount;
+        $unitPrice = $order->quantity > 0 ? $subtotal / $order->quantity : 0;
+
+        return [
+            'subtotal' => $subtotal,
+            'unit_price' => $unitPrice,
+            'breakdown' => [
+                'total_pembelian' => $totalPembelian,
+                'total_biaya_produksi' => $totalBiayaProduksi,
+                'total_hpp' => $totalHPP,
+                'margin_percentage' => $marginPercentage,
+                'margin_amount' => $marginAmount,
+            ],
+        ];
     }
 
     /**

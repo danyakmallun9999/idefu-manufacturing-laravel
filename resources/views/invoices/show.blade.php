@@ -19,6 +19,50 @@
                 </div>
             @endif
 
+            @if ($changes['requires_regeneration'] || $stockWarning)
+                <div class="bg-amber-50 border border-amber-200 text-amber-900 p-5 mb-6 rounded-xl">
+                    <div class="flex items-start space-x-3">
+                        <svg class="w-5 h-5 mt-1 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div class="flex-1">
+                            <p class="font-semibold">Data order telah berubah sejak invoice ini dibuat.</p>
+                            <ul class="mt-2 text-sm space-y-1">
+                                @if ($changes['quantity_changed'] && $snapshotData['quantity'] !== null)
+                                    <li>• Jumlah pesanan saat ini: <strong>{{ number_format($currentData['quantity'], 0, ',', '.') }} pcs</strong>
+                                        (snapshot invoice: {{ number_format($snapshotData['quantity'], 0, ',', '.') }} pcs)</li>
+                                @endif
+                                @if ($changes['unit_price_changed'] && $snapshotData['unit_price'] !== null)
+                                    <li>• Harga satuan terbaru: <strong>Rp {{ number_format($currentData['unit_price'], 0, ',', '.') }}</strong>
+                                        (snapshot invoice: Rp {{ number_format($snapshotData['unit_price'], 0, ',', '.') }})</li>
+                                @endif
+                                @if ($changes['total_changed'] && $snapshotData['total'] !== null)
+                                    <li>• Total tagihan saat ini: <strong>Rp {{ number_format($currentData['total'], 0, ',', '.') }}</strong>
+                                        (snapshot invoice: Rp {{ number_format($snapshotData['total'], 0, ',', '.') }})</li>
+                                @endif
+                                @if ($stockWarning)
+                                    <li>• Stok produk tersisa <strong>{{ $currentData['stock_available'] ?? '-' }}</strong> unit sehingga tidak mencukupi jumlah pesanan.</li>
+                                @endif
+                            </ul>
+                            <div class="mt-3 flex flex-wrap gap-3">
+                                <form action="{{ route('invoices.generateAgain', $invoice) }}" method="POST" class="inline">
+                                    @csrf
+                                    <button type="submit"
+                                        class="inline-flex items-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold rounded-lg">
+                                        Regenerasi Invoice
+                                    </button>
+                                </form>
+                                <a href="{{ route('orders.show', $invoice->order) }}"
+                                    class="inline-flex items-center px-4 py-2 bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 text-sm font-semibold rounded-lg">
+                                    Tinjau Order
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -103,29 +147,44 @@
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">Quantity:</p>
-                                <p class="font-semibold">{{ $invoice->order->quantity }} pcs</p>
+                                <p class="font-semibold">{{ number_format($currentData['quantity'], 0, ',', '.') }} pcs</p>
+                                @if ($snapshotData['quantity'] !== null)
+                                    <p class="text-xs {{ $changes['quantity_changed'] ? 'text-amber-600 font-semibold' : 'text-gray-500' }}">
+                                        Snapshot invoice: {{ number_format($snapshotData['quantity'], 0, ',', '.') }} pcs
+                                    </p>
+                                @endif
+                                @if (!is_null($currentData['stock_available']))
+                                    <p class="text-xs {{ $stockWarning ? 'text-red-600 font-semibold' : 'text-gray-500' }} mt-1">
+                                        Stok tersedia: {{ number_format($currentData['stock_available'], 0, ',', '.') }} unit
+                                        @if (!is_null($currentData['stock_difference']))
+                                            (sisa setelah order: {{ number_format($currentData['stock_difference'], 0, ',', '.') }})
+                                        @endif
+                                    </p>
+                                @endif
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">Production Price:</p>
                                 @if ($invoice->order->product_type === 'custom')
-                                    @php
-                                        $totalPembelian = $invoice->order->purchases->sum(function ($purchase) {
-                                            return $purchase->quantity * $purchase->price;
-                                        });
-                                        $totalBiayaProduksi = $invoice->order->productionCosts->sum('amount');
-                                        $totalHPP = $totalPembelian + $totalBiayaProduksi;
-                                    @endphp
-                                    @if ($totalHPP > 0)
-                                        <p class="font-semibold text-blue-600">HPP: Rp
-                                            {{ number_format($totalHPP, 0, ',', '.') }}</p>
-                                        <p class="text-sm text-gray-500">+ Margin (to be determined)</p>
+                                    @php $breakdown = $currentData['custom_breakdown']; @endphp
+                                    @if ($breakdown && $breakdown['total_hpp'] > 0)
+                                        <p class="font-semibold text-blue-600">HPP Terbaru: Rp
+                                            {{ number_format($breakdown['total_hpp'], 0, ',', '.') }}</p>
+                                        <p class="text-xs text-gray-500">Margin {{ $breakdown['margin_percentage'] }}% (Rp
+                                            {{ number_format($breakdown['margin_amount'], 0, ',', '.') }})</p>
+                                        @if ($snapshotData['subtotal'] !== null && $changes['subtotal_changed'])
+                                            <p class="text-xs text-amber-600 mt-1">Subtotal invoice awal: Rp
+                                                {{ number_format($snapshotData['subtotal'], 0, ',', '.') }}</p>
+                                        @endif
                                     @else
-                                        <p class="font-semibold text-gray-500">Will be calculated after production is completed
-                                        </p>
+                                        <p class="font-semibold text-gray-500">Harga akan dihitung setelah produksi selesai.</p>
                                     @endif
                                 @else
                                     <p class="font-semibold">Rp
-                                        {{ number_format($invoice->order->total_price ?? 0, 0, ',', '.') }}</p>
+                                        {{ number_format($currentData['unit_price'], 0, ',', '.') }}</p>
+                                    @if ($snapshotData['unit_price'] !== null && $changes['unit_price_changed'])
+                                        <p class="text-xs text-amber-600 mt-1">Harga invoice awal: Rp
+                                            {{ number_format($snapshotData['unit_price'], 0, ',', '.') }}</p>
+                                    @endif
                                 @endif
                             </div>
                         </div>
@@ -199,7 +258,7 @@
                     @endif
 
                     <!-- Down Payment Information -->
-                    @if ($invoice->paid_amount > 0 || $invoice->remaining_amount > 0)
+                    @if ($invoice->paid_amount > 0 || $invoice->remaining_amount > 0 || $currentData['remaining'] > 0)
                     <div class="bg-green-50 border border-green-200 rounded-lg p-4">
                         <h4 class="text-lg font-medium text-green-800 mb-3 flex items-center">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,14 +267,20 @@
                             Payment Status
                         </h4>
                         @php
-                            $totalAmount = $invoice->total_amount;
+                            $totalAmountSnapshot = $invoice->total_amount;
+                            $totalAmountCurrent = $currentData['total'];
                             $paidAmount = $invoice->paid_amount ?? 0;
-                            $remainingAmount = $invoice->remaining_amount ?? 0;
+                            $remainingSnapshot = $invoice->remaining_amount ?? 0;
+                            $remainingCurrent = $currentData['remaining'];
                         @endphp
                         <div class="space-y-2">
                             <div class="flex justify-between">
-                                <span class="text-sm text-green-700">Total Amount:</span>
-                                <span class="font-semibold text-green-800">Rp {{ number_format($totalAmount, 0, ',', '.') }}</span>
+                                <span class="text-sm text-green-700">Total (Invoice):</span>
+                                <span class="font-semibold text-green-800">Rp {{ number_format($totalAmountSnapshot, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-green-700">Total (Terbaru):</span>
+                                <span class="font-semibold {{ $changes['total_changed'] ? 'text-amber-600' : 'text-green-800' }}">Rp {{ number_format($totalAmountCurrent, 0, ',', '.') }}</span>
                             </div>
                             @if ($paidAmount > 0)
                                 <div class="flex justify-between">
@@ -223,13 +288,19 @@
                                     <span class="font-semibold text-green-800">Rp {{ number_format($paidAmount, 0, ',', '.') }}</span>
                                 </div>
                             @endif
-                            @if ($remainingAmount > 0)
+                            @if ($remainingSnapshot > 0)
                                 <div class="flex justify-between">
-                                    <span class="text-sm font-medium text-red-600">Remaining:</span>
-                                    <span class="font-bold text-red-600">Rp {{ number_format($remainingAmount, 0, ',', '.') }}</span>
+                                    <span class="text-sm font-medium text-red-600">Remaining (Invoice):</span>
+                                    <span class="font-bold text-red-600">Rp {{ number_format($remainingSnapshot, 0, ',', '.') }}</span>
                                 </div>
                             @endif
-                            @if ($paidAmount > 0 && $remainingAmount <= 0)
+                            @if ($remainingCurrent > 0)
+                                <div class="flex justify-between">
+                                    <span class="text-sm font-medium {{ $changes['remaining_changed'] ? 'text-amber-600' : 'text-red-600' }}">Remaining (Terbaru):</span>
+                                    <span class="font-bold {{ $changes['remaining_changed'] ? 'text-amber-600' : 'text-red-600' }}">Rp {{ number_format($remainingCurrent, 0, ',', '.') }}</span>
+                                </div>
+                            @endif
+                            @if ($paidAmount > 0 && $remainingCurrent <= 0)
                                 <div class="mt-2 p-2 bg-green-100 rounded">
                                     <span class="text-sm font-semibold text-green-800">✓ Fully Paid</span>
                                 </div>
@@ -245,74 +316,89 @@
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Cost Details</h3>
                     <div class="bg-gray-50 p-4 rounded-lg">
                         @if ($invoice->order->product_type === 'custom')
-                            @php
-                                $totalPembelian = $invoice->order->purchases->sum(function ($purchase) {
-                                    return $purchase->quantity * $purchase->price;
-                                });
-                                $totalBiayaProduksi = $invoice->order->productionCosts->sum('amount');
-                                $totalHPP = $totalPembelian + $totalBiayaProduksi;
-                            @endphp
-                            @if ($totalHPP > 0)
+                            @php $breakdown = $currentData['custom_breakdown']; @endphp
+                            @if ($breakdown && $breakdown['total_hpp'] > 0)
                                 <div class="space-y-3">
                                     <div class="flex justify-between items-center py-2">
-                                        <span class="text-gray-700">Total Material Purchase:</span>
+                                        <span class="text-gray-700">Total Material Purchase (Saat Ini):</span>
                                         <span class="font-semibold text-blue-600">Rp
-                                            {{ number_format($totalPembelian, 0, ',', '.') }}</span>
+                                            {{ number_format($breakdown['total_pembelian'], 0, ',', '.') }}</span>
                                     </div>
                                     <div class="flex justify-between items-center py-2">
-                                        <span class="text-gray-700">Total Production Cost:</span>
+                                        <span class="text-gray-700">Total Production Cost (Saat Ini):</span>
                                         <span class="font-semibold text-blue-600">Rp
-                                            {{ number_format($totalBiayaProduksi, 0, ',', '.') }}</span>
+                                            {{ number_format($breakdown['total_biaya_produksi'], 0, ',', '.') }}</span>
                                     </div>
                                     <hr class="border-gray-300 my-2">
                                     <div class="flex justify-between items-center py-2 text-lg">
-                                        <span class="font-semibold text-blue-900">Total HPP:</span>
+                                        <span class="font-semibold text-blue-900">Total HPP (Terbaru):</span>
                                         <span class="font-bold text-blue-900">Rp
-                                            {{ number_format($totalHPP, 0, ',', '.') }}</span>
+                                            {{ number_format($breakdown['total_hpp'], 0, ',', '.') }}</span>
                                     </div>
+                                    <div class="flex justify-between items-center py-2">
+                                        <span class="text-gray-700">Subtotal + Margin ({{ $breakdown['margin_percentage'] }}%):</span>
+                                        <span class="font-bold text-blue-900">Rp
+                                            {{ number_format($currentData['subtotal'], 0, ',', '.') }}</span>
+                                    </div>
+                                    @if ($snapshotData['subtotal'] !== null && $changes['subtotal_changed'])
+                                        <div class="flex justify-between items-center py-2">
+                                            <span class="text-gray-700">Subtotal Snapshot:</span>
+                                            <span class="font-semibold text-amber-600">Rp
+                                                {{ number_format($snapshotData['subtotal'], 0, ',', '.') }}</span>
+                                        </div>
+                                    @endif
                                     <div class="bg-blue-100 p-3 rounded-lg">
                                         <p class="text-sm text-blue-800">
-                                            <strong>Info:</strong> Selling price will be calculated from HPP + margin that will
-                                            be determined after production is completed.
+                                            <strong>Info:</strong> Nilai dihitung dari HPP terbaru + margin default 30%.
                                         </p>
                                     </div>
                                 </div>
                             @else
                                 <div class="text-center py-4">
-                                    <p class="text-gray-600">Price will be calculated after production is completed</p>
-                                    <p class="text-sm text-gray-500 mt-2">Based on HPP + margin</p>
+                                    <p class="text-gray-600">Harga akan dihitung setelah produksi selesai.</p>
+                                    <p class="text-sm text-gray-500 mt-2">Berdasarkan HPP + margin.</p>
                                 </div>
                             @endif
                         @else
                             <div class="space-y-3">
                                 <div class="flex justify-between items-center py-2">
-                                    <span>Subtotal:</span>
+                                    <span>Subtotal (Invoice):</span>
                                     <span class="font-semibold">Rp {{ number_format($invoice->subtotal, 0, ',', '.') }}</span>
                                 </div>
-                                
+                                <div class="flex justify-between items-center py-2">
+                                    <span>Subtotal (Terbaru):</span>
+                                    <span class="font-semibold {{ $changes['subtotal_changed'] ? 'text-amber-600' : '' }}">Rp
+                                        {{ number_format($currentData['subtotal'], 0, ',', '.') }}</span>
+                                </div>
+
                                 @if ($invoice->discount_amount > 0)
-                                <div class="flex justify-between items-center py-2">
-                                    <span class="text-red-600">Discount:</span>
-                                    <span class="font-semibold text-red-600">- Rp {{ number_format($invoice->discount_amount, 0, ',', '.') }}</span>
-                                </div>
+                                    <div class="flex justify-between items-center py-2">
+                                        <span class="text-red-600">Discount:</span>
+                                        <span class="font-semibold text-red-600">- Rp {{ number_format($invoice->discount_amount, 0, ',', '.') }}</span>
+                                    </div>
                                 @endif
-                                
+
                                 @if ($invoice->shipping_cost > 0)
-                                <div class="flex justify-between items-center py-2">
-                                    <span>Shipping Cost:</span>
-                                    <span class="font-semibold">Rp {{ number_format($invoice->shipping_cost, 0, ',', '.') }}</span>
-                                </div>
+                                    <div class="flex justify-between items-center py-2">
+                                        <span>Shipping Cost:</span>
+                                        <span class="font-semibold">Rp {{ number_format($invoice->shipping_cost, 0, ',', '.') }}</span>
+                                    </div>
                                 @endif
-                                
+
                                 <div class="flex justify-between items-center py-2">
                                     <span>Tax:</span>
                                     <span class="font-semibold">Rp {{ number_format($invoice->tax_amount ?? 0, 0, ',', '.') }}</span>
                                 </div>
-                                
+
                                 <hr class="my-2">
                                 <div class="flex justify-between items-center py-2 text-lg">
-                                    <span class="font-semibold">Total:</span>
+                                    <span class="font-semibold">Total (Invoice):</span>
                                     <span class="font-bold text-green-600">Rp {{ number_format($invoice->total_amount, 0, ',', '.') }}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2 text-lg">
+                                    <span class="font-semibold">Total (Terbaru):</span>
+                                    <span class="font-bold {{ $changes['total_changed'] ? 'text-amber-600' : 'text-green-600' }}">Rp
+                                        {{ number_format($currentData['total'], 0, ',', '.') }}</span>
                                 </div>
                             </div>
                         @endif
@@ -350,20 +436,22 @@
                                         {{ number_format($invoice->order->incomes->sum('amount'), 0, ',', '.') }}</span>
                                 </div>
                                 @php
-                                    $totalOrderValue =
-                                        $invoice->order->product_type === 'custom'
-                                            ? ($invoice->subtotal > 0
-                                                ? $invoice->subtotal
-                                                : 0)
-                                            : $invoice->order->total_price * $invoice->order->quantity;
                                     $totalPaid = $invoice->order->incomes->sum('amount');
-                                    $remainingAmount = $totalOrderValue - $totalPaid;
+                                    $remainingInvoice = $snapshotData['total'] !== null ? $snapshotData['total'] - $totalPaid : null;
+                                    $remainingCurrent = $currentData['total'] - $totalPaid;
                                 @endphp
-                                @if ($remainingAmount > 0)
+                                @if ($remainingInvoice !== null && $remainingInvoice > 0)
                                     <div class="flex justify-between items-center py-2">
-                                        <span class="font-semibold text-red-600">Remaining Payment:</span>
+                                        <span class="font-semibold text-red-600">Remaining Payment (Invoice):</span>
                                         <span class="font-bold text-red-600">Rp
-                                            {{ number_format($remainingAmount, 0, ',', '.') }}</span>
+                                            {{ number_format($remainingInvoice, 0, ',', '.') }}</span>
+                                    </div>
+                                @endif
+                                @if ($remainingCurrent > 0)
+                                    <div class="flex justify-between items-center py-2">
+                                        <span class="font-semibold {{ $changes['remaining_changed'] ? 'text-amber-600' : 'text-red-600' }}">Remaining Payment (Terbaru):</span>
+                                        <span class="font-bold {{ $changes['remaining_changed'] ? 'text-amber-600' : 'text-red-600' }}">Rp
+                                            {{ number_format($remainingCurrent, 0, ',', '.') }}</span>
                                     </div>
                                 @elseif($invoice->order->product_type === 'custom' && $totalPaid > 0)
                                     <div class="flex justify-between items-center py-2">

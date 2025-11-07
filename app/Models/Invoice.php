@@ -48,6 +48,9 @@ class Invoice extends Model
         'paid_amount',
         'remaining_amount',
         'payment_date',
+        'order_quantity_snapshot',
+        'order_unit_price_snapshot',
+        'order_total_snapshot',
         // Invoice status tracking
         'payment_status',
         'is_revised',
@@ -64,6 +67,9 @@ class Invoice extends Model
         'paid_amount' => 'decimal:2',
         'remaining_amount' => 'decimal:2',
         'payment_date' => 'date',
+        'order_quantity_snapshot' => 'decimal:2',
+        'order_unit_price_snapshot' => 'decimal:2',
+        'order_total_snapshot' => 'decimal:2',
         'is_revised' => 'boolean',
     ];
 
