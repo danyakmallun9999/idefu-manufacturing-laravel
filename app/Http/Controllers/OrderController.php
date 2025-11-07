@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\OrderBom;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage; // Added this import for Storage facade
@@ -214,7 +215,133 @@ class OrderController extends Controller
         
         return view('orders.show', compact('order'));
     }
-    // ... (method edit & update bisa kita urus nanti)
+
+    /**
+     * Menampilkan form edit order.
+     */
+    public function edit(Order $order)
+    {
+        $order->load('customer', 'product');
+        $customers = Customer::orderBy('name')->get();
+        $products = Product::orderBy('name')->get();
+
+        return view('orders.edit', compact('order', 'customers', 'products'));
+    }
+
+    /**
+     * Mengupdate data order yang ada.
+     */
+    public function update(Request $request, Order $order)
+    {
+        $validated = $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'product_type' => 'required|in:tetap,custom',
+            'order_date' => 'required|date',
+            'deadline' => 'nullable|date|after_or_equal:order_date',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        if ($request->product_type === 'tetap') {
+            $request->validate([
+                'product_id' => 'required|exists:products,id',
+                'fixed_product_specification' => 'nullable|string',
+            ]);
+        } else {
+            $request->validate([
+                'product_name' => 'required|string|max:255',
+                'custom_product_specification' => 'nullable|string',
+                'custom_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            ], [
+                'custom_image.image' => 'File harus berupa gambar.',
+                'custom_image.mimes' => 'Format gambar harus: jpeg, png, jpg, gif, atau webp.',
+                'custom_image.max' => 'Ukuran gambar maksimal 5MB.',
+            ]);
+        }
+
+        DB::beginTransaction();
+        try {
+            $updateData = [
+                'customer_id' => $validated['customer_id'],
+                'product_type' => $validated['product_type'],
+                'order_date' => $validated['order_date'],
+                'deadline' => $validated['deadline'],
+                'quantity' => $validated['quantity'],
+            ];
+
+            if ($request->product_type === 'tetap') {
+                $product = Product::findOrFail($request->product_id);
+                $updateData['product_id'] = $product->id;
+                $updateData['product_name'] = $product->name;
+                $updateData['product_specification'] = $request->fixed_product_specification;
+
+                if ($order->image) {
+                    Storage::disk('public')->delete($order->image);
+                    $updateData['image'] = null;
+                }
+            } else {
+                $updateData['product_id'] = null;
+                $updateData['product_name'] = $request->product_name;
+                $updateData['product_specification'] = $request->custom_product_specification;
+
+                if ($request->hasFile('custom_image')) {
+                    if ($order->image) {
+                        Storage::disk('public')->delete($order->image);
+                    }
+
+                    $imagePath = $request->file('custom_image')->store('custom-products', 'public');
+                    $updateData['image'] = $imagePath;
+                }
+            }
+
+            $order->update($updateData);
+
+            DB::commit();
+
+            return redirect()->route('orders.index')->with('success', 'Order berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Order update failed:', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui order: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Menghapus order beserta resource terkait.
+     */
+    public function destroy(Order $order)
+    {
+        DB::beginTransaction();
+
+        try {
+            if ($order->image) {
+                Storage::disk('public')->delete($order->image);
+            }
+
+            $order->purchases()->delete();
+            $order->productionCosts()->delete();
+            $order->incomes()->delete();
+            $order->invoices()->delete();
+
+            $order->delete();
+
+            DB::commit();
+
+            return redirect()->route('orders.index')->with('success', 'Order berhasil dihapus.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            \Log::error('Order deletion failed:', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->back()->with('error', 'Gagal menghapus order: ' . $e->getMessage());
+        }
+    }
 
     /**
      * Mengupdate status order.

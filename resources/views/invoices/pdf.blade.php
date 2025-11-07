@@ -405,7 +405,7 @@
                             <tr>
                                 <td colspan="2" style="padding-left: 0;">
                                     <div class="company-address">
-                                        {{ $invoice->company_address ?? 'Office : Jl. Hugeng Imam Santoso Km.09 NGabul Tahunan Jepara, Central Java Indonesia. Workshop : Bawu Rt 10/02 Batealit Jepara.' }}<br>
+                                        {{ $invoice->company_address ?? 'Office : Jl. Hugeng Imam Santoso Km.09 Ngabul Tahunan Jepara, Central Java Indonesia. Workshop : Bawu Rt 10/02 Batealit Jepara.' }}<br>
                                         Telp: {{ $invoice->company_phone ?? '+6285741555089' }} | Email:
                                         {{ $invoice->company_email ?? 'idesign@idefu.co.id' }} |
                                         {{ $invoice->company_website ?? 'idefu.co.id' }}

@@ -11,6 +11,19 @@
                 <span class="px-3 py-1 rounded-full text-sm font-medium {{ $order->getStatusBadgeClass() }}">
                     {{ $order->status }}
                 </span>
+                <a href="{{ route('orders.edit', $order) }}"
+                    class="inline-flex items-center px-3 py-1.5 text-sm font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-md hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2">
+                    Edit
+                </a>
+                <form action="{{ route('orders.destroy', $order) }}" method="POST" class="inline"
+                    onsubmit="return confirm('Anda yakin ingin menghapus order ini?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit"
+                        class="inline-flex items-center px-3 py-1.5 text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                        Hapus
+                    </button>
+                </form>
             </div>
         </div>
     </x-slot>
