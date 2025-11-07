@@ -1178,6 +1178,23 @@
             </div>
 
             <div x-show="tab === 'pembelian'" class="space-y-6">
+                @if (session('error') && session('active_tab', 'info') === 'pembelian')
+                    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl" role="alert">
+                        <p class="font-semibold">{{ session('error') }}</p>
+                    </div>
+                @endif
+
+                @if ($errors->any() && session('active_tab', 'info') === 'pembelian')
+                    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl" role="alert">
+                        <p class="font-semibold mb-2">Mohon periksa kembali input Anda:</p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 <!-- Data Table Card -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                     <div class="flex items-center justify-between mb-6">
@@ -1329,7 +1346,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah</label>
-                                <input type="text" name="quantity"
+                                <input type="text" name="quantity" inputmode="decimal" min="0.01" max="999999.99" step="0.01"
                                     class="w-full border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                     placeholder="0" oninput="formatNumber(this)" />
                             </div>
@@ -1338,7 +1355,7 @@
                                 <div class="relative">
                                     <span
                                         class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">Rp</span>
-                                    <input type="text" name="price"
+                                    <input type="text" name="price" inputmode="decimal" min="0" max="999999999999.99" step="0.01"
                                         class="w-full pl-12 pr-4 py-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                         placeholder="0" oninput="formatNumber(this)" />
                                 </div>
@@ -1462,7 +1479,7 @@
                                         </div>
                                         <div class="col-span-2">
                                             <input type="text" :name="`purchases[${index}][quantity]`"
-                                                x-model="purchase.quantity"
+                                                x-model="purchase.quantity" inputmode="decimal" min="0.01" max="999999.99" step="0.01"
                                                 class="w-full border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                                 placeholder="0" required oninput="formatNumber(this)" />
                                         </div>
@@ -1471,7 +1488,7 @@
                                                 <span
                                                     class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">Rp</span>
                                                 <input type="text" :name="`purchases[${index}][price]`"
-                                                    x-model="purchase.price"
+                                                    x-model="purchase.price" inputmode="decimal" min="0" max="999999999999.99" step="0.01"
                                                     class="w-full pl-8 pr-4 py-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                                     placeholder="0" required oninput="formatNumber(this)" />
                                             </div>
